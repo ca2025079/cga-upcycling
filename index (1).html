@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>업사이클링 교육 참가신청</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root{
+    --bg:#DCE4DF; --ink:#1B2B26; --cobalt:#1E5A47; --gold:#F1E4A6;
+    --paper:#FFFFFF; --field:#F4F7F5; --line:#CCD7D1; --muted:#5B6B64; --err:#C7331F;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:Pretendard,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    -webkit-font-smoothing:antialiased; word-break:keep-all;
+    min-height:100vh; padding:28px 18px 56px;
+  }
+  .ticket{
+    max-width:440px; margin:0 auto; background:var(--paper);
+    border-radius:22px; position:relative;
+    box-shadow:0 24px 50px -28px rgba(27,43,38,.45);
+  }
+  [hidden]{display:none !important}
+
+  /* 윗부분: 행사 정보 */
+  .t-head{background:var(--cobalt); color:#fff; border-radius:22px 22px 0 0; padding:26px 26px 30px}
+  .t-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:18px}
+  .t-host{font-size:15px; font-weight:700; opacity:.9}
+  .t-kind{background:var(--gold); color:var(--ink); font-size:14px; font-weight:800; padding:5px 12px; border-radius:6px}
+  .t-title{margin:0; font-size:34px; line-height:1.22; font-weight:800; letter-spacing:-.02em}
+  .t-sub{margin:10px 0 0; font-size:17px; font-weight:700; opacity:.92; line-height:1.45}
+  .t-info{margin:24px 0 0; display:grid; grid-template-columns:auto 1fr; gap:11px 18px; font-size:18px}
+  .t-info dt{font-weight:600; opacity:.72}
+  .t-info dd{margin:0; font-weight:800}
+  .t-info dd.hl{color:var(--gold)}
+  .deadline{display:inline-block; margin-top:22px; border:2px solid var(--gold); color:var(--gold); font-size:17px; font-weight:800; padding:8px 14px; border-radius:8px}
+
+  /* 절취선 */
+  .perf{position:relative; height:0; margin:0 24px; border-top:4px dashed var(--bg); top:-2px}
+  .perf::before,.perf::after{content:""; position:absolute; top:-17px; width:30px; height:30px; border-radius:50%; background:var(--bg)}
+  .perf::before{left:-39px}
+  .perf::after{right:-39px}
+
+  /* 아랫부분: 신청서 */
+  .t-body{padding:30px 26px 26px}
+  .t-body h2{margin:0 0 6px; font-size:23px; font-weight:800}
+  .lead{margin:0 0 24px; color:var(--muted); font-size:16px; font-weight:600; line-height:1.5}
+  .field{margin-bottom:18px}
+  .field label{display:block; font-size:17px; font-weight:800; margin-bottom:8px}
+  .field input{
+    width:100%; height:58px; border:2px solid var(--line); border-radius:12px;
+    padding:0 16px; font:inherit; font-size:19px; font-weight:700; color:var(--ink); background:var(--field);
+  }
+  .field input::placeholder{color:#A3A8C1; font-weight:500}
+  .field input:focus{outline:none; border-color:var(--cobalt); background:#fff; box-shadow:0 0 0 4px rgba(30,90,71,.16)}
+  .field.bad input{border-color:var(--err)}
+  .types{border:0; padding:0; margin:0 0 22px}
+  .types legend{padding:0; font-size:17px; font-weight:800; margin-bottom:8px}
+  .types-row{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
+  .types label{position:relative; cursor:pointer}
+  .types input{position:absolute; opacity:0; inset:0; margin:0}
+  .types span{display:flex; align-items:center; justify-content:center; height:54px; border:2px solid var(--line); border-radius:12px; font-size:16.5px; font-weight:800; color:var(--muted); background:var(--field); text-align:center; line-height:1.2}
+  .types input:checked + span{background:var(--cobalt); border-color:var(--cobalt); color:#fff}
+  .types input:focus-visible + span{box-shadow:0 0 0 4px rgba(30,90,71,.25)}
+  .hint{margin:8px 0 0; font-size:15px; color:var(--muted); font-weight:600; line-height:1.45}
+
+  .consent{border:2px solid var(--line); border-radius:12px; padding:15px 16px; margin:26px 0 20px}
+  .consent.bad{border-color:var(--err)}
+  .consent .check{display:flex; gap:12px; align-items:center; font-size:17px; font-weight:800; cursor:pointer}
+  .consent input{width:24px; height:24px; accent-color:var(--cobalt); flex:none; margin:0}
+  .consent details{margin-top:12px; font-size:15px; color:var(--muted); line-height:1.55}
+  .consent summary{cursor:pointer; font-weight:700; color:var(--cobalt)}
+  .consent dl{display:grid; grid-template-columns:auto 1fr; gap:6px 12px; margin:10px 0 0}
+  .consent dt{font-weight:800; color:var(--ink)}
+  .consent dd{margin:0}
+
+  .msg{color:var(--err); font-weight:800; font-size:16px; margin:0 0 14px}
+  .btn{
+    width:100%; height:64px; border:0; border-radius:14px; cursor:pointer;
+    background:var(--cobalt); color:#fff; font:inherit; font-size:21px; font-weight:800;
+  }
+  .btn:focus-visible{outline:3px solid var(--gold); outline-offset:3px}
+  .btn:disabled{opacity:.6; cursor:default}
+  .contact{margin:18px 0 0; text-align:center; font-size:14.5px; color:var(--muted); font-weight:600}
+  .closed h2{font-size:26px}
+
+  /* 발급된 입장권 */
+  .i-head{background:#16372D; color:#fff; border-radius:22px 22px 0 0; padding:22px 26px}
+  .i-head .t-kind{display:inline-block; margin-bottom:10px}
+  .i-event{margin:0; font-size:24px; font-weight:800; line-height:1.3}
+  .i-main{padding:26px 26px 30px}
+  .i-dup{margin:0 0 16px; background:#F7F0CF; border-radius:10px; padding:12px 14px; font-size:15.5px; font-weight:700}
+  .i-no-label{margin:0; font-size:16px; font-weight:700; color:var(--muted)}
+  .i-no{margin:2px 0 20px; font-size:68px; line-height:1; font-weight:800; color:var(--cobalt); letter-spacing:-.02em}
+  .i-who{margin:0; display:grid; grid-template-columns:auto 1fr; gap:10px 18px; font-size:19px}
+  .i-who dt{color:var(--muted); font-weight:600}
+  .i-who dd{margin:0; font-weight:800}
+  .i-foot{padding:28px 26px 26px}
+  .i-when{margin:0 0 22px; display:grid; grid-template-columns:auto 1fr; gap:8px 18px; font-size:17px}
+  .i-when dt{color:var(--muted); font-weight:600}
+  .i-when dd{margin:0; font-weight:800}
+  .barcode{display:flex; height:54px; gap:0; margin-bottom:18px}
+  .barcode i{display:block; height:100%; background:var(--ink)}
+  .i-note{margin:0; font-size:15.5px; font-weight:700; line-height:1.55; color:var(--ink)}
+
+  @media (prefers-reduced-motion:no-preference){
+    .issue{animation:issue .55s cubic-bezier(.2,.8,.2,1)}
+    @keyframes issue{from{transform:translateY(40px) rotate(-2deg); opacity:0} to{transform:none; opacity:1}}
+  }
+  @media (max-width:360px){
+    .t-title{font-size:29px} .i-no{font-size:56px}
+  }
+</style>
+</head>
+<body>
+
+<main>
+  <!-- 신청서 -->
+  <article class="ticket" id="formTicket">
+    <header class="t-head">
+      <div class="t-top">
+        <span class="t-host" id="host"></span>
+        <span class="t-kind">참가신청</span>
+      </div>
+      <h1 class="t-title" id="title"></h1>
+      <p class="t-sub" id="subtitle"></p>
+      <dl class="t-info">
+        <dt>일시</dt><dd id="when"></dd>
+        <dt>장소</dt><dd id="place"></dd>
+        <dt>강사</dt><dd id="instructor"></dd>
+        <dt>혜택</dt><dd class="hl" id="benefit"></dd>
+        <dt>다과</dt><dd class="hl" id="snack"></dd>
+      </dl>
+      <span class="deadline" id="deadline"></span>
+    </header>
+    <div class="perf" aria-hidden="true"></div>
+
+    <section class="t-body" id="formArea">
+      <h2>참가 신청서</h2>
+      <p class="lead">신청 인원에 따라 강의실이 바뀔 수 있어요. 바뀌면 입력한 전화번호로 안내해 드립니다.</p>
+
+      <form id="form" novalidate>
+        <fieldset class="types">
+          <legend>신청 구분</legend>
+          <div class="types-row">
+            <label><input type="radio" name="ptype" value="재학생" checked><span>재학생</span></label>
+            <label><input type="radio" name="ptype" value="교직원"><span>교직원</span></label>
+            <label><input type="radio" name="ptype" value="일반"><span>지역민·일반</span></label>
+          </div>
+        </fieldset>
+        <div class="field">
+          <label for="dept" id="deptLabel">학과</label>
+          <input id="dept" name="dept" autocomplete="off" placeholder="예) 사회복지과" maxlength="40">
+        </div>
+        <div class="field">
+          <label for="name">성명</label>
+          <input id="name" name="name" autocomplete="name" placeholder="예) 홍길동" maxlength="20">
+        </div>
+        <div class="field" id="sidField">
+          <label for="sid">학번</label>
+          <input id="sid" name="sid" inputmode="numeric" autocomplete="off" placeholder="숫자만 입력" maxlength="12">
+        </div>
+        <div class="field">
+          <label for="phone">전화번호</label>
+          <input id="phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="010-0000-0000" maxlength="13">
+          <p class="hint">강의실 변경 등 안내 연락에만 사용해요.</p>
+        </div>
+
+        <div class="consent" id="consentBox">
+          <label class="check"><input type="checkbox" id="agree"> 개인정보 수집·이용에 동의합니다</label>
+          <details>
+            <summary>수집 내용 보기</summary>
+            <dl>
+              <dt>항목</dt><dd>신청 구분, 소속(학과), 성명, 학번(재학생만), 전화번호</dd>
+              <dt>목적</dt><dd>참가 인원 파악, 강의실 변경 등 행사 안내 연락</dd>
+              <dt>보유기간</dt><dd>행사 종료 후 지체 없이 파기</dd>
+            </dl>
+            <p style="margin:10px 0 0">동의하지 않을 수 있으며, 이 경우 참가 신청이 제한됩니다.</p>
+          </details>
+        </div>
+
+        <p class="msg" id="msg" role="alert" hidden></p>
+        <button class="btn" id="submitBtn" type="submit">참가 신청하기</button>
+      </form>
+      <p class="contact" id="contact1"></p>
+    </section>
+
+    <section class="t-body closed" id="closedArea" hidden>
+      <h2>신청이 마감되었어요</h2>
+      <p class="lead">참가 신청 기간이 끝났습니다. 궁금한 점은 아래로 문의해 주세요.</p>
+      <p class="contact" id="contact2" style="text-align:left"></p>
+    </section>
+  </article>
+
+  <!-- 발급된 입장권 -->
+  <article class="ticket issue" id="issued" hidden>
+    <header class="i-head">
+      <span class="t-kind">입장권</span>
+      <p class="i-event" id="iEvent"></p>
+    </header>
+    <div class="i-main">
+      <p class="i-dup" id="iDup" hidden>이미 신청된 정보예요. 기존 입장권을 다시 보여드려요.</p>
+      <p class="i-no-label">신청 번호</p>
+      <p class="i-no" id="iNo"></p>
+      <dl class="i-who">
+        <dt>구분</dt><dd id="iType"></dd>
+        <dt>성명</dt><dd id="iName"></dd>
+        <dt id="iDeptL">학과</dt><dd id="iDept"></dd>
+        <dt id="iSidL">학번</dt><dd id="iSid"></dd>
+      </dl>
+    </div>
+    <div class="perf" aria-hidden="true"></div>
+    <div class="i-foot">
+      <dl class="i-when">
+        <dt>일시</dt><dd id="iWhen"></dd>
+        <dt>장소</dt><dd id="iPlace"></dd>
+        <dt>혜택</dt><dd id="iBenefit"></dd>
+        <dt>다과</dt><dd id="iSnack"></dd>
+      </dl>
+      <div class="barcode" id="barcode" aria-hidden="true"></div>
+      <p class="i-note">신청이 완료되었어요. 강의실이 바뀌면 입력한 번호로 연락드릴게요. 이 화면을 캡처해 두면 편해요.</p>
+    </div>
+  </article>
+</main>
+
+<script>
+  /* ===== 여기만 바꾸면 됩니다 ===== */
+  const SUPABASE_URL = 'https://qhnchxmzaerpyafjevaz.supabase.co';        // 예: https://abcd1234.supabase.co
+  const SUPABASE_KEY = 'sb_publishable_4ea9gx5IxsTrVUAH0lPH2Q_JQkKMCzq';
+  const CFG = {
+    host: 'C.G.A 청암 그린 액션',
+    title: '업사이클링 교육',
+    subtitle: '일상에서 실천하는 ESG 업사이클링 실습',
+    date: '2026. 10. 20.(화)',
+    time: '10:00 ~ 12:00 (2시간)',
+    place: '건강복지관 3층 세미나실 4',
+    instructor: '박선진',
+    benefit: '참석확인증 발급 (경력 마일리지 인정)',
+    snack: '참석자 전원 다과 제공',
+    closeLabel: '10. 19.(월) 신청마감',
+    closeAt: '2026-10-19T23:59:00+09:00',     // 이 시각이 지나면 마감 화면 표시
+    contact: '740-7463'
+  };
+  /* ================================ */
+  CFG.open = !CFG.closeAt || new Date() < new Date(CFG.closeAt);
+  const $ = id => document.getElementById(id);
+  const LIVE = /^https:\/\/.+\.supabase\.co$/.test(SUPABASE_URL);
+
+  // 행사 정보 채우기
+  $('host').textContent = CFG.host;
+  $('title').textContent = CFG.title;
+  $('subtitle').textContent = CFG.subtitle || '';
+  $('subtitle').hidden = !CFG.subtitle;
+  $('when').textContent = CFG.date + '  ' + CFG.time;
+  $('place').textContent = CFG.place;
+  $('snack').textContent = CFG.snack;
+  $('instructor').textContent = CFG.instructor;
+  $('benefit').textContent = CFG.benefit;
+  $('deadline').textContent = CFG.closeLabel || '';
+  $('deadline').hidden = !CFG.closeLabel;
+  $('contact1').textContent = $('contact2').textContent = CFG.contact ? '문의  ' + CFG.contact : '';
+  if (!CFG.open) { $('formArea').hidden = true; $('closedArea').hidden = false; }
+
+  // 입력 보조
+  $('sid').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, ''); });
+  $('phone').addEventListener('input', e => {
+    const d = e.target.value.replace(/\D/g, '').slice(0, 11);
+    let f = d;
+    if (d.length > 3 && d.length < 8) f = d.slice(0, 3) + '-' + d.slice(3);
+    else if (d.length >= 8) f = d.slice(0, 3) + '-' + d.slice(3, d.length - 4) + '-' + d.slice(-4);
+    e.target.value = f;
+  });
+  ['dept','name','sid','phone'].forEach(id => $(id).addEventListener('input', () => $(id).parentElement.classList.remove('bad')));
+  $('agree').addEventListener('change', () => $('consentBox').classList.remove('bad'));
+
+  // 신청 구분별 입력칸
+  const TYPES = {
+    '재학생': { label: '학과', ph: '예) 사회복지과', need: true, sid: true },
+    '교직원': { label: '소속 부서', ph: '예) 기획처', need: true, sid: false },
+    '일반':   { label: '소속 (선택)', ph: '예) 순천시, 소속 기관 등', need: false, sid: false }
+  };
+  const TYPE_NAME = { '재학생': '재학생', '교직원': '교직원', '일반': '지역민·일반' };
+  const curType = () => document.querySelector('input[name=ptype]:checked').value;
+  function setType() {
+    const t = TYPES[curType()];
+    $('deptLabel').textContent = t.label;
+    $('dept').placeholder = t.ph;
+    $('sidField').hidden = !t.sid;
+    ['dept','sid'].forEach(id => $(id).parentElement.classList.remove('bad'));
+    showMsg('');
+  }
+  document.querySelectorAll('input[name=ptype]').forEach(r => r.addEventListener('change', setType));
+
+  function showMsg(t) { $('msg').textContent = t; $('msg').hidden = !t; }
+
+  function validate(d) {
+    const bad = [];
+    const T = TYPES[d.ptype];
+    if (T.need && !d.dept) bad.push(['dept', T.label + '을(를) 입력해 주세요.']);
+    if (!d.name) bad.push(['name', '성명을 입력해 주세요.']);
+    if (T.sid && d.sid.length < 4) bad.push(['sid', '학번을 숫자로 입력해 주세요.']);
+    if (!/^01[016789]\d{7,8}$/.test(d.phone.replace(/\D/g, ''))) bad.push(['phone', '전화번호를 010-0000-0000 형식으로 입력해 주세요.']);
+    bad.forEach(([id]) => $(id).parentElement.classList.add('bad'));
+    if (bad.length) { $(bad[0][0]).focus(); return bad[0][1]; }
+    if (!d.agree) { $('consentBox').classList.add('bad'); return '개인정보 수집·이용에 동의해야 신청할 수 있어요.'; }
+    return '';
+  }
+
+  $('form').addEventListener('submit', e => {
+    e.preventDefault();
+    const d = {
+      ptype: curType(), dept: $('dept').value.trim(), name: $('name').value.trim(),
+      sid: curType() === '재학생' ? $('sid').value.trim() : '', phone: $('phone').value.trim(), agree: $('agree').checked
+    };
+    const err = validate(d);
+    showMsg(err);
+    if (err) return;
+
+    const btn = $('submitBtn');
+    btn.disabled = true; btn.textContent = '신청하는 중…';
+    const reset = () => { btn.disabled = false; btn.textContent = '참가 신청하기'; };
+
+    if (LIVE) {
+      fetch(SUPABASE_URL + '/rest/v1/rpc/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+        body: JSON.stringify({ p_type: d.ptype, p_dept: d.dept, p_name: d.name, p_sid: d.sid, p_phone: d.phone, p_agree: d.agree })
+      })
+        .then(r => r.json())
+        .then(res => { reset(); done(Object.assign({ ptype: d.ptype, dept: d.dept, name: d.name, sid: d.sid.replace(/\D/g, ''), phone: d.phone }, res)); })
+        .catch(() => { reset(); showMsg('연결이 불안정해요. 잠시 후 다시 눌러 주세요.'); });
+    } else {
+      // 미리보기용
+      setTimeout(() => { reset(); done({ ok: true, dup: false, no: 27, ptype: d.ptype, dept: d.dept, name: d.name, sid: d.sid, phone: d.phone }); }, 600);
+    }
+  });
+
+  function done(res) {
+    if (!res || !res.ok) {
+      if (res && res.closed) { $('formArea').hidden = true; $('closedArea').hidden = false; }
+      showMsg((res && res.msg) || '신청을 처리하지 못했어요. 다시 시도해 주세요.');
+      return;
+    }
+    $('iEvent').textContent = CFG.title;
+    $('iNo').textContent = 'No. ' + String(res.no).padStart(3, '0');
+    $('iName').textContent = res.name;
+    $('iType').textContent = TYPE_NAME[res.ptype] || '';
+    $('iDept').textContent = res.dept;
+    $('iDeptL').textContent = res.ptype === '재학생' ? '학과' : '소속';
+    $('iDeptL').hidden = $('iDept').hidden = !res.dept;
+    $('iSid').textContent = res.sid;
+    $('iSidL').hidden = $('iSid').hidden = res.ptype !== '재학생';
+    $('iWhen').textContent = CFG.date + '  ' + CFG.time;
+    $('iPlace').textContent = CFG.place;
+    $('iSnack').textContent = CFG.snack;
+    $('iBenefit').textContent = CFG.benefit;
+    $('iDup').hidden = !res.dup;
+    drawBarcode((res.sid || String(res.phone).replace(/\D/g, '')) + String(res.no).padStart(3, '0'));
+    $('formTicket').hidden = true;
+    $('issued').hidden = false;
+    window.scrollTo(0, 0);
+  }
+
+  function drawBarcode(seed) {
+    const box = $('barcode'); box.innerHTML = '';
+    const s = (seed + seed + seed).slice(0, 36);
+    for (let i = 0; i < s.length; i++) {
+      const n = Number(s[i]) || 0;
+      const bar = document.createElement('i');
+      bar.style.width = (1 + (n % 3)) * 2 + 'px';
+      bar.style.marginRight = (1 + ((n + i) % 3)) * 2 + 'px';
+      box.appendChild(bar);
+    }
+  }
+</script>
+</body>
+</html>

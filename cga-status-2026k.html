@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>참가신청 현황</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{--bg:#EDF1EE; --ink:#1B2B26; --cobalt:#1E5A47; --gold:#F1E4A6; --line:#D2DBD6; --muted:#5B6B64; --warn:#A8741A; --err:#C7331F}
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:Pretendard,-apple-system,"Malgun Gothic",sans-serif; word-break:keep-all; padding:28px 18px 56px}
+  .wrap{max-width:760px; margin:0 auto}
+  h1{margin:0 0 4px; font-size:28px; font-weight:800}
+  .meta{margin:0 0 24px; color:var(--muted); font-size:16px; font-weight:600}
+  .panel{background:#fff; border-radius:18px; padding:24px; margin-bottom:18px; border:1px solid var(--line)}
+  .panel h2{margin:0 0 16px; font-size:19px; font-weight:800}
+  .count{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap}
+  .count b{font-size:64px; line-height:1; font-weight:800; color:var(--cobalt)}
+  .count span{font-size:20px; font-weight:700; color:var(--muted)}
+  .bar{height:16px; background:#E3E9E5; border-radius:99px; overflow:hidden; margin:18px 0 14px}
+  .bar i{display:block; height:100%; background:var(--cobalt); border-radius:99px}
+  .status{font-size:18px; font-weight:800}
+  .status.warn{color:var(--warn)} .status.over{color:var(--err)}
+  .bar.warn i{background:var(--warn)} .bar.over i{background:var(--err)}
+  .pill{display:inline-block; font-size:14px; font-weight:800; padding:5px 12px; border-radius:6px; margin-left:8px; vertical-align:middle}
+  .pill.on{background:var(--gold); color:var(--ink)} .pill.off{background:#E3E9E5; color:var(--muted)}
+  table{width:100%; border-collapse:collapse; font-size:17px}
+  th{text-align:left; font-size:15px; color:var(--muted); font-weight:700; padding:0 0 10px; border-bottom:2px solid var(--ink)}
+  th:last-child,td:last-child{text-align:right}
+  td{padding:12px 0; border-bottom:1px solid var(--line); font-weight:700}
+  td:last-child{font-weight:800; font-size:19px}
+  .empty{color:var(--muted); font-weight:600; margin:0}
+  .qr-row{display:flex; gap:24px; align-items:center; flex-wrap:wrap}
+  #qr{padding:14px; background:#fff; border:2px solid var(--line); border-radius:14px; line-height:0}
+  .url{font-size:14px; color:var(--muted); word-break:break-all; margin:0 0 14px; font-weight:600}
+  .btns{display:flex; gap:10px; flex-wrap:wrap}
+  .btn{height:48px; padding:0 18px; border-radius:12px; border:2px solid var(--ink); background:#fff; color:var(--ink); font:inherit; font-size:16px; font-weight:800; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center}
+  .btn.primary{background:var(--ink); color:#fff}
+  .note{margin:12px 0 0; font-size:14px; color:var(--muted); font-weight:600}
+  .poster{display:none}
+
+  @media print{
+    @page{size:A4; margin:18mm}
+    body{background:#fff; padding:0}
+    .wrap{display:none}
+    .poster{display:block; text-align:center; color:#1B2B26}
+    .poster .kind{display:inline-block; background:#F1E4A6; font-size:20pt; font-weight:800; padding:4mm 8mm; border-radius:3mm}
+    .poster h1{font-size:40pt; margin:10mm 0 4mm; line-height:1.2}
+    .poster .info{font-size:20pt; font-weight:700; margin:0 0 2mm}
+    .poster .snack{font-size:20pt; font-weight:800; color:#1E5A47; margin:4mm 0 10mm}
+    .poster #qrBig{display:inline-block; padding:6mm; border:1.2mm solid #1B2B26; border-radius:5mm; line-height:0}
+    .poster .cta{font-size:24pt; font-weight:800; margin:10mm 0 0}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 id="title"></h1>
+  <p class="meta" id="meta"></p>
+
+  <section class="panel">
+    <h2>현재 신청 인원 <span class="pill" id="openPill"></span></h2>
+    <div class="count"><b id="count"></b><span id="cap"></span></div>
+    <div class="bar" id="bar"><i id="barFill"></i></div>
+    <p class="status" id="status"></p>
+  </section>
+
+  <section class="panel">
+    <h2>구분별 인원</h2>
+    <div id="typeBox"></div>
+  </section>
+
+  <section class="panel">
+    <h2>학과별 인원 (재학생)</h2>
+    <div id="deptBox"></div>
+  </section>
+
+  <section class="panel">
+    <h2>신청 QR코드</h2>
+    <div class="qr-row">
+      <div id="qr"></div>
+      <div style="flex:1; min-width:220px">
+        <p class="url" id="url"></p>
+        <div class="btns">
+          <button class="btn primary" id="print">안내문 인쇄</button>
+          <button class="btn" id="save">QR 이미지 저장</button>
+          <button class="btn" id="copy">링크 복사</button>
+        </div>
+        <p class="note" id="saveNote">저장이 안 되면 QR을 우클릭(휴대폰은 길게 누르기)해 이미지를 저장하세요.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>신청자 명단</h2>
+    <p class="empty" style="margin-bottom:14px">개인정보 보호를 위해 이 화면에는 명단을 띄우지 않아요. 명단은 Supabase에 로그인해 Table Editor에서 확인하고, 엑셀(CSV)로 내려받을 수 있어요.</p>
+    <a class="btn" id="sheet" target="_blank">Supabase 열기</a>
+  </section>
+</div>
+
+<!-- 인쇄용 안내문 -->
+<div class="poster">
+  <span class="kind">C.G.A 청암 그린 액션 참가신청</span>
+  <h1 id="pTitle"></h1>
+  <p class="info" id="pWhen"></p>
+  <p class="info" id="pPlace"></p>
+  <p class="info" id="pBenefit"></p>
+  <p class="snack" id="pSnack"></p>
+  <div id="qrBig"></div>
+  <p class="cta">휴대폰 카메라로 QR을 찍어 신청하세요</p>
+</div>
+
+<script>
+  /* ===== 여기만 바꾸면 됩니다 ===== */
+  const SUPABASE_URL = 'https://qhnchxmzaerpyafjevaz.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_4ea9gx5IxsTrVUAH0lPH2Q_JQkKMCzq';
+  const CFG = {
+    title: '업사이클링 교육',
+    date: '2026. 10. 20.(화)',
+    time: '10:00 ~ 12:00 (2시간)',
+    place: '건강복지관 3층 세미나실 4',
+    benefit: '참석확인증 발급 (경력 마일리지 인정)',
+    snack: '참석자 전원 다과 제공',
+    capacity: 60,                                  // 현재 강의실 수용 인원
+    closeAt: '2026-10-19T23:59:00+09:00'
+  };
+  /* ================================ */
+  const $ = id => document.getElementById(id);
+  const LIVE = /^https:\/\/.+\.supabase\.co$/.test(SUPABASE_URL);
+  const FORM_URL = location.origin && location.origin.startsWith('http') ? location.origin + '/' : 'https://예시.vercel.app/';
+
+  function load() {
+    if (!LIVE) return render({ count: 51, by_type: [['재학생',38],['교직원',8],['일반',5]], by_dept: [['간호학과',14],['사회복지과',10],['유아교육과',7],['경찰행정과',4],['뷰티미용과',3]] });
+    fetch(SUPABASE_URL + '/rest/v1/rpc/registration_stats', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY }, body: '{}'
+    }).then(r => r.json()).then(render)
+      .catch(() => { $('status').textContent = '인원을 불러오지 못했어요. 새로고침해 주세요.'; });
+  }
+
+  function render(S) {
+  const D = Object.assign({}, CFG, {
+    count: S.count, byDept: S.by_dept || [], url: FORM_URL,
+    open: new Date() < new Date(CFG.closeAt),
+    sheetUrl: 'https://supabase.com/dashboard/projects'
+  });
+
+  $('title').textContent = D.title;
+  $('meta').textContent = D.date + '  ' + D.time + '  |  ' + D.place;
+  $('openPill').textContent = D.open ? '신청 받는 중' : '마감';
+  $('openPill').className = 'pill ' + (D.open ? 'on' : 'off');
+
+  $('count').textContent = D.count + '명';
+  $('cap').textContent = '/ 수용 ' + D.capacity + '명';
+  const ratio = D.capacity ? D.count / D.capacity : 0;
+  $('barFill').style.width = Math.min(100, ratio * 100) + '%';
+  let cls = '', txt = '여유 있어요. 남은 자리 ' + Math.max(0, D.capacity - D.count) + '석';
+  if (ratio >= 1) { cls = 'over'; txt = '수용 인원을 넘었어요. 더 큰 강의실로 변경이 필요해요 (초과 ' + (D.count - D.capacity) + '명)'; }
+  else if (ratio >= 0.8) { cls = 'warn'; txt = '거의 찼어요. 큰 강의실을 미리 확인해 두세요 (남은 자리 ' + (D.capacity - D.count) + '석)'; }
+  $('status').textContent = txt; $('status').className = 'status ' + cls; $('bar').className = 'bar ' + cls;
+
+  const TN = { '재학생': '재학생', '교직원': '교직원', '일반': '지역민·일반' };
+  const bt = S.by_type || [];
+  $('typeBox').innerHTML = bt.length
+    ? '<table><thead><tr><th>구분</th><th>인원</th></tr></thead><tbody>' +
+      bt.map(([t, n]) => '<tr><td>' + (TN[t] || t) + '</td><td>' + n + '명</td></tr>').join('') + '</tbody></table>'
+    : '<p class="empty">아직 신청자가 없어요.</p>';
+
+  if (D.byDept.length) {
+    $('deptBox').innerHTML = '<table><thead><tr><th>학과</th><th>인원</th></tr></thead><tbody>' +
+      D.byDept.map(([d, n]) => '<tr><td>' + d.replace(/[<>&]/g, '') + '</td><td>' + n + '명</td></tr>').join('') +
+      '</tbody></table>';
+  } else {
+    $('deptBox').innerHTML = '<p class="empty">아직 신청자가 없어요.</p>';
+  }
+
+  $('url').textContent = D.url;
+  $('sheet').href = D.sheetUrl;
+  $('pTitle').textContent = D.title;
+  $('pWhen').textContent = D.date + '  ' + D.time;
+  $('pPlace').textContent = D.place;
+  $('pSnack').textContent = D.snack;
+  $('pBenefit').textContent = '혜택  ' + D.benefit;
+
+  if (!window.__qr) { window.__qr = 1;
+  const opt = t => ({ text: D.url, colorDark: '#1B2B26', colorLight: '#FFFFFF', correctLevel: QRCode.CorrectLevel.M });
+  new QRCode($('qr'), Object.assign(opt(), { width: 200, height: 200 }));
+  new QRCode($('qrBig'), Object.assign(opt(), { width: 360, height: 360 }));
+  }
+
+  $('print').onclick = () => window.print();
+  $('save').onclick = () => {
+    const c = $('qr').querySelector('canvas');
+    const src = c ? c.toDataURL('image/png') : ($('qr').querySelector('img') || {}).src;
+    if (!src) return;
+    const a = document.createElement('a');
+    a.href = src; a.download = CFG.title + '_참가신청_QR.png';
+    document.body.appendChild(a); a.click(); a.remove();
+  };
+  }
+  load();
+  setInterval(load, 60000);   // 1분마다 인원 새로고침
+
+  $('copy').onclick = () => {
+    const done = () => { $('copy').textContent = '복사됨'; setTimeout(() => $('copy').textContent = '링크 복사', 1500); };
+    if (navigator.clipboard) navigator.clipboard.writeText(FORM_URL).then(done, fallback); else fallback();
+    function fallback() {
+      const t = document.createElement('textarea'); t.value = FORM_URL; document.body.appendChild(t);
+      t.select(); document.execCommand('copy'); t.remove(); done();
+    }
+  };
+</script>
+</body>
+</html>
